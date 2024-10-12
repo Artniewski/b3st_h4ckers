@@ -1,0 +1,12 @@
+- AI integration text as input, text as output)
+- CRUD for job offers ( need to define job contract )
+- persist job interview (transcription) || optional: sound/video
+- get format of response from AI 
+
+
+
+Nice to have:
+-text to speech integration
+-speech to text integration
+-camera for interview
+
