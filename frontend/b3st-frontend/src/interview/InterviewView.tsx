@@ -1,7 +1,5 @@
 import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
-import { v4 as uuidv4 } from 'uuid';
-import { saveAs } from 'file-saver';
 
 // Transcript type definition
 type Transcript = {
@@ -74,13 +72,17 @@ const MockInterviewView: React.FC = () => {
                     }
                 };
 
-                mediaRecorderRef.current.onstop = () => {
+                mediaRecorderRef.current.onstop = async () => {
                     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-                    const fileName = `${uuidv4()}.wav`;
-                    saveAs(audioBlob, fileName);
+                    const formData = new FormData()
+                    formData.append('file', audioBlob, 'audio.wav')
+                   const response = await fetch("http://localhost:8080", {
+                       method: 'POST',
+                       body:formData
+                   })
+                    const responseJson = await response.json()
+                    setTranscripts((prev) => [...prev, { text: responseJson.body.transcript, isUser: true }, {text: responseJson.body.ai_response, isUser: false}]);
 
-                    const userMessage = `User recorded response saved as WAV. File name: ${fileName}`;
-                    setTranscripts((prev) => [...prev, { text: userMessage, isUser: true }]);
                 };
 
                 mediaRecorderRef.current.start();
