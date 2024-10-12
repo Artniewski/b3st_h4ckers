@@ -76,11 +76,12 @@ const MockInterviewView: React.FC = () => {
                     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
                     const formData = new FormData()
                     formData.append('file', audioBlob, 'audio.wav')
-                   const response = await fetch("http://localhost:8080", {
+                   const response = await fetch("http://127.0.0.1:5000/process_audio", {
                        method: 'POST',
                        body:formData
                    })
                     const responseJson = await response.json()
+                    console.log(responseJson)
                     setTranscripts((prev) => [...prev, { text: responseJson.body.transcript, isUser: true }, {text: responseJson.body.ai_response, isUser: false}]);
 
                 };

@@ -1,12 +1,12 @@
 import './App.css'
-import UserProfileView from "./user_profile/UserProfile.tsx";
+import MockInterviewView from "./interview/InterviewView.tsx";
 
 function App() {
 
 
   return (
     <>
-      <UserProfileView />
+      <MockInterviewView />
     </>
   )
 }
