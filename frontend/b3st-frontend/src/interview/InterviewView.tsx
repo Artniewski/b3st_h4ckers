@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import ReactMarkdown from "react-markdown";
 import Webcam from "react-webcam";
 
@@ -24,6 +24,22 @@ const Container = styled.div`
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 `;
+
+const spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
+
+const LoadingSpinner = styled.div`
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: ${spin} 1s linear infinite;
+  margin: 20px auto;
+`;
+
 
 const TranscriptContainer = styled.div`
     flex: 1;
@@ -64,6 +80,7 @@ type MockInterviewViewProps = {
 const MockInterviewView  = ({userDetails}: MockInterviewViewProps) => {
     const [transcripts, setTranscripts] = useState<Transcript[]>([]);
     const [isRecording, setIsRecording] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
 
@@ -71,7 +88,7 @@ const MockInterviewView  = ({userDetails}: MockInterviewViewProps) => {
     useState(async () => {
         if (!userDetails) return; // Ensure userDetails is valid before fetching
         if(transcripts.length > 0) return; // Ensure we only fetch once
-
+        setIsLoading(true);
         const fetchData = async () => {
             const response = await fetch("http://127.0.0.1:5000/details", {
                 method: 'POST',
@@ -82,6 +99,7 @@ const MockInterviewView  = ({userDetails}: MockInterviewViewProps) => {
             });
             const responseJson = await response.json();
             console.log(responseJson);
+            setIsLoading(false);
             setTranscripts((prev) => [...prev, { text: responseJson.body.ai_response, isUser: false, audio: responseJson.body.audio }]);
         };
     
@@ -105,7 +123,7 @@ const MockInterviewView  = ({userDetails}: MockInterviewViewProps) => {
                     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
                     const formData = new FormData();
                     formData.append('file', audioBlob, 'audio.wav');
-                    
+                    setIsLoading(true);
                     const response = await fetch("http://127.0.0.1:5000/process_audio", {
                         method: 'POST',
                         body: formData
@@ -113,7 +131,7 @@ const MockInterviewView  = ({userDetails}: MockInterviewViewProps) => {
 
                     const responseJson = await response.json();
                     console.log(responseJson);
-
+                    setIsLoading(false);
                     setTranscripts((prev) => [
                         ...prev,
                         { text: responseJson.body.transcript, isUser: true },
@@ -125,6 +143,9 @@ const MockInterviewView  = ({userDetails}: MockInterviewViewProps) => {
                 setIsRecording(true);
             } catch (error) {
                 console.error('Error accessing microphone:', error);
+            }
+            finally {
+                setIsLoading(false);
             }
         } else {
             mediaRecorderRef.current?.stop();
@@ -144,6 +165,7 @@ const MockInterviewView  = ({userDetails}: MockInterviewViewProps) => {
                         {!transcript.isUser && <audio src={`http://127.0.0.1:5000/mp3/${transcript.audio}`} controls autoPlay={index === transcripts.length - 1} />}
                     </Message>
                 ))}
+                {isLoading && <LoadingSpinner />}
             </TranscriptContainer>
             <RecordButton onClick={handleRecord}>{isRecording ? 'Stop Recording' : 'Record Your Response'}</RecordButton>
         </Container>
