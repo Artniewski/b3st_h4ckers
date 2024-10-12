@@ -28,7 +28,7 @@ def init_routes(app):
         conversation_context = context_manager.build_conversation_context()
 
         # Get AI response from Llama API, including the context
-        ai_response = generate_ai_response_llama(conversation_context + "\n Ask first question")
+        ai_response = generate_ai_response_llama(conversation_context)
 
         # Add question and response to the context manager
         context_manager.add_question(ai_response)

@@ -10,7 +10,7 @@ RESPONSE_FOLDER = 'responses'
 # Initialize Whisper model
 whisper_model = whisper.load_model("base")  # You can use 'tiny', 'base', 'small', 'medium', or 'large'
 
-LLAMA_API_URL = "http://localhost:11434/api/generate"
+LLAMA_API_URL = "http://localhost:11434/api/chat"
 
 
 def convert_speech_to_text_whisper(wav_path):
@@ -33,19 +33,24 @@ def generate_ai_response_llama(transcript):
     }
     data = {
         "model": "llama3.2",
-        "prompt": transcript,
+        "messages": transcript,
         "stream": False
     }
+    print("AAAAAAAAAAA", str(transcript))
+    print("BBBBBBBBB")
 
     try:
+        print(data)
         response = requests.post(LLAMA_API_URL, headers=headers, json=data)
 
         # Decode the byte response and parse as JSON
         response_json = json.loads(response.content.decode('utf-8'))
+        print(response_json)
 
         # Extract the 'response' field from the JSON object
-        ai_response = response_json.get("response", "Llama API did not return a valid response.")
-        print(f"Llama AI Response: {ai_response}")
+        ai_response_message = response_json.get("message", {"content": "Llama API did not return a valid response."})
+        #get content
+        ai_response = ai_response_message['content']
         return ai_response
 
     except requests.exceptions.RequestException as e:

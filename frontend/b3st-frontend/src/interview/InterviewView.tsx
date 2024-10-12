@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import ReactMarkdown from "react-markdown";
 import Webcam from "react-webcam";
@@ -61,23 +61,32 @@ type MockInterviewViewProps = {
     userDetails: any;
 };
 
-const MockInterviewView  = ({userDetails}:MockInterviewViewProps) => {
+const MockInterviewView  = ({userDetails}: MockInterviewViewProps) => {
     const [transcripts, setTranscripts] = useState<Transcript[]>([]);
-    useState(async () => {
-        const response = await fetch("http://127.0.0.1:5000/details", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userDetails)
-        });
-        const responseJson = await response.json()
-        console.log(responseJson)
-        setTranscripts((prev) => [...prev, { text: responseJson.body.ai_response, isUser: false, audio: responseJson.body.audio}]);
-    })
     const [isRecording, setIsRecording] = useState(false);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
+
+    // Use useEffect for side effects (fetching data)
+    useState(async () => {
+        if (!userDetails) return; // Ensure userDetails is valid before fetching
+        if(transcripts.length > 0) return; // Ensure we only fetch once
+
+        const fetchData = async () => {
+            const response = await fetch("http://127.0.0.1:5000/details", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userDetails)
+            });
+            const responseJson = await response.json();
+            console.log(responseJson);
+            setTranscripts((prev) => [...prev, { text: responseJson.body.ai_response, isUser: false, audio: responseJson.body.audio }]);
+        };
+    
+        await fetchData();
+    });
 
     const handleRecord = async () => {
         if (!isRecording) {
@@ -94,16 +103,22 @@ const MockInterviewView  = ({userDetails}:MockInterviewViewProps) => {
 
                 mediaRecorderRef.current.onstop = async () => {
                     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-                    const formData = new FormData()
-                    formData.append('file', audioBlob, 'audio.wav')
-                   const response = await fetch("http://127.0.0.1:5000/process_audio", {
-                       method: 'POST',
-                       body:formData
-                   })
-                    const responseJson = await response.json()
-                    console.log(responseJson)
-                    setTranscripts((prev) => [...prev, { text: responseJson.body.transcript, isUser: true }, {text: responseJson.body.ai_response, isUser: false, audio: responseJson.body.audio}]);
+                    const formData = new FormData();
+                    formData.append('file', audioBlob, 'audio.wav');
+                    
+                    const response = await fetch("http://127.0.0.1:5000/process_audio", {
+                        method: 'POST',
+                        body: formData
+                    });
 
+                    const responseJson = await response.json();
+                    console.log(responseJson);
+
+                    setTranscripts((prev) => [
+                        ...prev,
+                        { text: responseJson.body.transcript, isUser: true },
+                        { text: responseJson.body.ai_response, isUser: false, audio: responseJson.body.audio }
+                    ]);
                 };
 
                 mediaRecorderRef.current.start();
@@ -126,8 +141,8 @@ const MockInterviewView  = ({userDetails}:MockInterviewViewProps) => {
                         <ReactMarkdown>
                             {transcript.text}
                         </ReactMarkdown>
-                                        {!transcript.isUser && <audio src={`http://127.0.0.1:5000/mp3/${transcript.audio}`} controls autoPlay={index == transcripts.length-1} />}
-                                    </Message>
+                        {!transcript.isUser && <audio src={`http://127.0.0.1:5000/mp3/${transcript.audio}`} controls autoPlay={index === transcripts.length - 1} />}
+                    </Message>
                 ))}
             </TranscriptContainer>
             <RecordButton onClick={handleRecord}>{isRecording ? 'Stop Recording' : 'Record Your Response'}</RecordButton>
