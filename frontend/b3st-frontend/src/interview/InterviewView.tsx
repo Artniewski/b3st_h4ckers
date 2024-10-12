@@ -4,7 +4,11 @@ import styled from 'styled-components';
 // Transcript type definition
 type Transcript = {
     text: string;
-    isUser: boolean;
+    isUser: true;
+} | {
+    text: string;
+    isUser: false;
+    audio: string;
 };
 
 // Styled components
@@ -53,7 +57,7 @@ const RecordButton = styled.button`
 
 const MockInterviewView: React.FC = () => {
     const [transcripts, setTranscripts] = useState<Transcript[]>([
-        { text: 'Welcome to your mock interview. Please tell me a bit about yourself.', isUser: false },
+        { text: 'Welcome to your mock interview. Please tell me a bit about yourself.', isUser: false, audio: "" },
     ]);
     const [isRecording, setIsRecording] = useState(false);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -82,7 +86,7 @@ const MockInterviewView: React.FC = () => {
                    })
                     const responseJson = await response.json()
                     console.log(responseJson)
-                    setTranscripts((prev) => [...prev, { text: responseJson.body.transcript, isUser: true }, {text: responseJson.body.ai_response, isUser: false}]);
+                    setTranscripts((prev) => [...prev, { text: responseJson.body.transcript, isUser: true }, {text: responseJson.body.ai_response, isUser: false, audio: responseJson.body.audio}]);
 
                 };
 
@@ -103,6 +107,7 @@ const MockInterviewView: React.FC = () => {
                 {transcripts.map((transcript, index) => (
                     <Message key={index} isUser={transcript.isUser}>
                         {transcript.text}
+                        {!transcript.isUser && <audio src={`http://127.0.0.1:5000/mp3/${transcript.audio}`} controls />}
                     </Message>
                 ))}
             </TranscriptContainer>
