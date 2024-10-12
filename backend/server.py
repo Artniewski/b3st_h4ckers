@@ -3,13 +3,15 @@ from gtts import gTTS
 import os
 import whisper
 import requests
-import pyttsx3
 import tempfile
-from pydub import AudioSegment
 import json
+from flask_cors import CORS  # Import Flask-CORS
+import uuid
+
 
 
 app = Flask(__name__)
+CORS(app)
 
 # Path to save processed files
 RESPONSE_FOLDER = 'responses'
@@ -17,28 +19,33 @@ if not os.path.exists(RESPONSE_FOLDER):
     os.makedirs(RESPONSE_FOLDER)
 
 # Initialize Whisper model for speech recognition
-whisper_model = whisper.load_model("base")  # You can use 'tiny', 'base', 'small', 'medium', or 'large'
+whisper_model = whisper .load_model("base")  # You can use 'tiny', 'base', 'small', 'medium', or 'large'
 
 # Llama API URL
 LLAMA_API_URL = "http://localhost:11434/api/generate"
 
+
+@app.route('/mp3/responses/<filename>', methods=['GET'])
+def download_file(filename):
+    file_path = f"responses/{filename}"  # Path to your MP3 files
+    return send_file(file_path, as_attachment=True)
+
+
 @app.route('/process_audio', methods=['POST'])
 def process_audio():
-    data = request.get_json()
-    if 'file_path' not in data:
-        return jsonify({"error": "No file_path provided in the request"}), 400
+    if 'file' not in request.files:
+        return jsonify({"error": "No file provided in the request"}), 400
 
-    file_path = data['file_path']
+    # Get the uploaded file from the request (which is a .wav file)
+    file = request.files['file']
 
-    # Validate if the provided path exists
-    if not os.path.isfile(file_path):
-        return jsonify({"error": f"File does not exist at the given path: {file_path}"}), 400
-
-    # Convert MP3 to WAV for processing
-    wav_path = convert_mp3_to_wav(file_path)
+    # Save the uploaded file temporarily as a WAV file
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_wav_file:
+        file.save(temp_wav_file.name)
+        temp_wav_path = temp_wav_file.name
 
     # Convert audio to text (STT) using Whisper
-    transcript = convert_speech_to_text_whisper(wav_path)
+    transcript = convert_speech_to_text_whisper(temp_wav_path)
 
     if not transcript:
         return jsonify({"error": "Could not transcribe the audio"}), 500
@@ -51,26 +58,15 @@ def process_audio():
 
     # Check if the MP3 was saved successfully
     if response_mp3_path:
-        # return send_file(response_mp3_path, as_attachment=True)
         return jsonify({"body": 
                         {
                          "transcript": transcript,
-                            "ai_response": ai_response,
-                            "response_mp3_path": response_mp3_path  
+                         "ai_response": ai_response,
+                         "audio": response_mp3_path  
                         }
                         }), 200
     else:
         return jsonify({"error": "Failed to save AI response as MP3"}), 500
-
-def convert_mp3_to_wav(mp3_path):
-    """
-    Converts MP3 to WAV for processing with Whisper.
-    """
-    wav_path = mp3_path.replace('.mp3', '.wav')
-    audio = AudioSegment.from_mp3(mp3_path)
-    audio.export(wav_path, format="wav")
-    return wav_path
-
 
 def convert_speech_to_text_whisper(wav_path):
     """
@@ -97,7 +93,7 @@ def generate_ai_response_llama(transcript):
     }
 
     try:
-        response = requests.post("http://localhost:11434/api/generate", headers=headers, json=data)
+        response = requests.post(LLAMA_API_URL, headers=headers, json=data)
 
         # Decode the byte response and parse as JSON
         response_json = json.loads(response.content.decode('utf-8'))
@@ -126,7 +122,7 @@ def convert_text_to_speech(text):
         os.makedirs(RESPONSE_FOLDER)
 
     # Path to save the MP3 file
-    mp3_path = os.path.join(RESPONSE_FOLDER, 'response.mp3')
+    mp3_path = os.path.join(RESPONSE_FOLDER, f"{uuid.uuid4()}.mp3")
 
     try:
         # Use gTTS to convert text to speech and save as MP3

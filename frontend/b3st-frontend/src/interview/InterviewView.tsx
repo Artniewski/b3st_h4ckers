@@ -110,8 +110,8 @@ const MockInterviewView: React.FC = () => {
                         <ReactMarkdown>
                             {transcript.text}
                         </ReactMarkdown>
-                        {!transcript.isUser && <audio src={`http://127.0.0.1:5000/mp3/${transcript.audio}`} controls />}
-                    </Message>
+                                        {!transcript.isUser && <audio src={`http://127.0.0.1:5000/mp3/${transcript.audio}`} controls autoPlay={index == transcripts.length-1} />}
+                                    </Message>
                 ))}
             </TranscriptContainer>
             <RecordButton onClick={handleRecord}>{isRecording ? 'Stop Recording' : 'Record Your Response'}</RecordButton>
