@@ -11,7 +11,7 @@ class InterviewContextManager:
         """
         Set the initial instructions for the interviewer.
         """
-        self.interviewer_instructions = instructions
+        self.interviewer_instructions = "Perform a interview, here's decription for user: " + instructions + "\n" + "Ask first question. Respond in really short sentences."
 
     def add_question(self, question):
         """
