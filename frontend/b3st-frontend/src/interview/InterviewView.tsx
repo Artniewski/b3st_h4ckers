@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import styled from 'styled-components';
 import ReactMarkdown from "react-markdown";
+import Webcam from "react-webcam";
 
 // Transcript type definition
 type Transcript = {
@@ -56,10 +57,21 @@ const RecordButton = styled.button`
     }
 `;
 
-const MockInterviewView: React.FC = () => {
-    const [transcripts, setTranscripts] = useState<Transcript[]>([
-        { text: 'Welcome to your mock interview. Please tell me a bit about yourself.', isUser: false, audio: "" },
-    ]);
+type MockInterviewViewProps = {
+    userDetails: any;
+};
+
+const MockInterviewView  = ({userDetails}:MockInterviewViewProps) => {
+    const [transcripts, setTranscripts] = useState<Transcript[]>([]);
+    useState(async () => {
+        const response = await fetch("http://127.0.0.1:5000/details", {
+            method: 'POST',
+            body: JSON.stringify(userDetails)
+        });
+        const responseJson = await response.json()
+        console.log(responseJson)
+        setTranscripts((prev) => [...prev, { text: responseJson.body.transcript, isUser: false, audio: responseJson.body.audio}]);
+    })
     const [isRecording, setIsRecording] = useState(false);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
@@ -104,6 +116,7 @@ const MockInterviewView: React.FC = () => {
 
     return (
         <Container>
+            <Webcam/>
             <TranscriptContainer>
                 {transcripts.map((transcript, index) => (
                     <Message key={index} isUser={transcript.isUser}>
