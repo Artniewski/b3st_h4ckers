@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import ReactMarkdown from "react-markdown";
+import Webcam from "react-webcam";
 
 // Transcript type definition
 type Transcript = {
@@ -104,6 +105,7 @@ const MockInterviewView: React.FC = () => {
 
     return (
         <Container>
+            <Webcam/>
             <TranscriptContainer>
                 {transcripts.map((transcript, index) => (
                     <Message key={index} isUser={transcript.isUser}>
