@@ -26,3 +26,6 @@ dist-ssr
 *.mp3
 responses/*
 .DS_Store
+
+__pycache__/*
+*/*/__pycache__/*

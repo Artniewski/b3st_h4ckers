@@ -20,11 +20,9 @@ def init_routes(app):
     # Route to set interviewer instructions
     @app.route('/details', methods=['POST'])
     def set_instructions():
+        context_manager.clear_context()
         data = request.get_json()
-        if 'details' not in data:
-            return jsonify({"error": "No instructions provided"}), 400
-        
-        instructions = data['details']
+        instructions = str(data)
         context_manager.set_interviewer_instructions(instructions)
                 # Build context for the AI response
         conversation_context = context_manager.build_conversation_context()

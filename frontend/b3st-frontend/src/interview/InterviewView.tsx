@@ -66,11 +66,14 @@ const MockInterviewView  = ({userDetails}:MockInterviewViewProps) => {
     useState(async () => {
         const response = await fetch("http://127.0.0.1:5000/details", {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
             body: JSON.stringify(userDetails)
         });
         const responseJson = await response.json()
         console.log(responseJson)
-        setTranscripts((prev) => [...prev, { text: responseJson.body.transcript, isUser: false, audio: responseJson.body.audio}]);
+        setTranscripts((prev) => [...prev, { text: responseJson.body.ai_response, isUser: false, audio: responseJson.body.audio}]);
     })
     const [isRecording, setIsRecording] = useState(false);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);

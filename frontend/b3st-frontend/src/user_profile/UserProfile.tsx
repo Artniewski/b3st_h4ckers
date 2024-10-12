@@ -61,12 +61,12 @@ type UserProfileViewProps = {
 
 const UserProfileView = ({setUserDetails, setIsInterviewing}: UserProfileViewProps) => {
     const [profile, setProfile] = useState<UserProfile>({
-        name: '',
-        email: '',
-        bio: '',
-        skills: '',
-        experience: '',
-        education: '',
+        name: 'Basia',
+        email: 'basia@wp.pl',
+        bio: 'Im a software developer intern',
+        skills: 'Java, Spring',
+        experience: 'None',
+        education: 'Master of Computer Science',
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
