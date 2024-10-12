@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
+import ReactMarkdown from "react-markdown";
 
 // Transcript type definition
 type Transcript = {
@@ -106,7 +107,9 @@ const MockInterviewView: React.FC = () => {
             <TranscriptContainer>
                 {transcripts.map((transcript, index) => (
                     <Message key={index} isUser={transcript.isUser}>
-                        {transcript.text}
+                        <ReactMarkdown>
+                            {transcript.text}
+                        </ReactMarkdown>
                         {!transcript.isUser && <audio src={`http://127.0.0.1:5000/mp3/${transcript.audio}`} controls />}
                     </Message>
                 ))}

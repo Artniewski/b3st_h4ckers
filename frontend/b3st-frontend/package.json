@@ -10,17 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@types/file-saver": "^2.0.7",
-    "@types/react-mic": "^12.4.6",
     "@types/styled-components": "^5.1.34",
-    "@types/uuid": "^10.0.0",
-    "file-saver": "^2.0.5",
-    "lamejs": "^1.2.1",
-    "mic-recorder-to-mp3": "^2.2.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-mic": "^12.4.6",
-    "recorder-js": "^1.0.7",
+    "react-markdown": "^8.0.6",
     "styled-components": "^6.1.13",
     "uuid": "^10.0.0"
   },
