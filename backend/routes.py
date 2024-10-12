@@ -1,8 +1,13 @@
 from flask import request, jsonify, send_file
 from utils.speech_utils import convert_speech_to_text_whisper, generate_ai_response_llama, convert_text_to_speech
+from utils.context_manager import InterviewContextManager
+import tempfile
 import os
 
 RESPONSE_FOLDER = 'responses'
+
+# Create an instance of the InterviewContextManager
+context_manager = InterviewContextManager()
 
 def init_routes(app):
     
@@ -10,6 +15,47 @@ def init_routes(app):
     def download_file(filename):
         file_path = f"responses/{filename}"  # Path to your MP3 files
         return send_file(file_path, as_attachment=True)
+
+
+    # Route to set interviewer instructions
+    @app.route('/details', methods=['POST'])
+    def set_instructions():
+        data = request.get_json()
+        if 'details' not in data:
+            return jsonify({"error": "No instructions provided"}), 400
+        
+        instructions = data['details']
+        context_manager.set_interviewer_instructions(instructions)
+                # Build context for the AI response
+        conversation_context = context_manager.build_conversation_context()
+
+        # Get AI response from Llama API, including the context
+        ai_response = generate_ai_response_llama(conversation_context + "\n Ask first question")
+
+        # Add question and response to the context manager
+        context_manager.add_question(ai_response)
+
+        # Convert AI response to MP3 (TTS)
+        response_mp3_path = convert_text_to_speech(ai_response)
+
+        # Check if the MP3 was saved successfully
+        if response_mp3_path:
+            return jsonify({
+                "body": {
+                    "ai_response": ai_response,
+                    "audio": response_mp3_path  
+                }
+            }), 200
+        else:
+            return jsonify({"error": "Failed to save AI response as MP3"}), 500
+    
+
+    # Route to clear the conversation context
+    @app.route('/clear_state', methods=['POST'])
+    def clear_state():
+        context_manager.clear_context()
+        return jsonify({"message": "Conversation context cleared."}), 200
+
 
     @app.route('/process_audio', methods=['POST'])
     def process_audio():
@@ -30,19 +76,28 @@ def init_routes(app):
         if not transcript:
             return jsonify({"error": "Could not transcribe the audio"}), 500
 
-        # Get AI response from Llama API
-        ai_response = generate_ai_response_llama(transcript)
+        context_manager.add_response(transcript)
+
+        # Build context for the AI response
+        conversation_context = context_manager.build_conversation_context()
+
+        # Get AI response from Llama API, including the context
+        ai_response = generate_ai_response_llama(conversation_context)
+
+        # Add question and response to the context manager
+        context_manager.add_question(ai_response)
 
         # Convert AI response to MP3 (TTS)
         response_mp3_path = convert_text_to_speech(ai_response)
 
+        print(context_manager.build_conversation_context())
         # Check if the MP3 was saved successfully
         if response_mp3_path:
             return jsonify({
                 "body": {
                     "transcript": transcript,
                     "ai_response": ai_response,
-                    "audio": response_mp3_path
+                    "audio": response_mp3_path  
                 }
             }), 200
         else:
