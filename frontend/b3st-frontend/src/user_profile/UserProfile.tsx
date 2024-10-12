@@ -54,7 +54,12 @@ const SaveButton = styled.button`
   }
 `;
 
-const UserProfileView: React.FC = () => {
+type UserProfileViewProps = {
+    setUserDetails: any;
+    setIsInterviewing: any;
+};
+
+const UserProfileView = ({setUserDetails, setIsInterviewing}: UserProfileViewProps) => {
     const [profile, setProfile] = useState<UserProfile>({
         name: '',
         email: '',
@@ -71,7 +76,8 @@ const UserProfileView: React.FC = () => {
 
     const handleSave = () => {
         // Logic to save user profile, e.g., send to backend
-        console.log('User profile saved:', profile);
+        setUserDetails(profile);
+        setIsInterviewing(true);
     };
 
     return (
@@ -118,7 +124,7 @@ const UserProfileView: React.FC = () => {
                 value={profile.education}
                 onChange={handleChange}
             />
-            <SaveButton onClick={handleSave}>Save Profile</SaveButton>
+            <SaveButton onClick={handleSave}>Start Interview</SaveButton>
         </Container>
     );
 };
