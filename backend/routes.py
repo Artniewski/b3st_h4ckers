@@ -11,9 +11,40 @@ context_manager = InterviewContextManager()
 
 def init_routes(app):
     
+    @app.route('/interviews', methods=['GET'])
+    def list_snapshots():
+        """
+        Endpoint to list all available interview snapshots with MP3 paths.
+        """
+        snapshots = context_manager.list_all_snapshots()
+        return jsonify(snapshots)
+    
+
+    @app.route('/interviews/<snapshot_id>', methods=['GET'])
+    def get_snapshot(snapshot_id):
+        """
+        Endpoint to get a specific interview snapshot by ID.
+        """
+        snapshot = context_manager.get_snapshot(snapshot_id)
+        if snapshot:
+            return jsonify(snapshot)
+        else:
+            return jsonify({"error": "Snapshot not found"}), 404
+
+
+    @app.route('/end_interview', methods=['POST'])
+    def end_interview():
+        # Call the method to end the interview and get the AI-generated summary
+        summary = context_manager.end_interview_and_get_summary()
+        context_manager.save_interview_snapshot(summary)
+        # Return the summary in the response
+        return jsonify({"summary": summary})
+
+
     @app.route('/mp3/responses/<filename>', methods=['GET'])
     def download_file(filename):
         file_path = f"responses/{filename}"  # Path to your MP3 files
+
         return send_file(file_path, as_attachment=True)
 
 
@@ -23,7 +54,7 @@ def init_routes(app):
         context_manager.clear_context()
         data = request.get_json()
         instructions = str(data)
-        context_manager.set_interviewer_instructions(instructions)
+        context_manager.set_interviewer_instructions(instructions, data)
                 # Build context for the AI response
         conversation_context = context_manager.build_conversation_context()
 
@@ -38,6 +69,7 @@ def init_routes(app):
 
         # Check if the MP3 was saved successfully
         if response_mp3_path:
+            context_manager.add_mp3_path(response_mp3_path)
             return jsonify({
                 "body": {
                     "ai_response": ai_response,
@@ -91,6 +123,7 @@ def init_routes(app):
         print(context_manager.build_conversation_context())
         # Check if the MP3 was saved successfully
         if response_mp3_path:
+            context_manager.add_mp3_path(response_mp3_path)
             return jsonify({
                 "body": {
                     "transcript": transcript,

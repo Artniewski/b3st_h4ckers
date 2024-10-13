@@ -15,7 +15,8 @@ type UserProfile = {
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  max-width: 600px;
+  max-width: 400px;
+  min-width: 400px;
   margin: 0 auto;
   padding: 20px;
   background: #f9f9f9;
